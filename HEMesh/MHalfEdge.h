@@ -24,13 +24,14 @@ template <class G>
 struct Edge{
     typedef typename G::face F;
     typedef typename G::vertex V;
-
     int id;
     Edge* twin;
     Edge* next;
     V* head;
+    V* tail;
     F* face;
 
+    Edge(V* _t, V* _h): tail(_t), head(_h){};
     bool operator==(Edge e){return id==e.id;}
 };
 
@@ -41,14 +42,18 @@ struct Face{
     int id;
     E* edge;
 
+    Face(E* _e):edge(_e){};
     bool operator==(Face f){id == f.id;}
 };
 
 template <class G>
 class HalfEdgeM{
     typedef typename G::vertex v;
+    typedef typename G::edge e;
+    typedef typename G::face f;
     vector<v> verteces;
     vector<int> vIndex;
+    vector<f> faces;
 public:
     bool loadOBJ(char* path){
         FILE* file = fopen(path, "r");
@@ -80,12 +85,30 @@ public:
                 vIndex.push_back(verIndex[2]);
             }
         }
+
+        //Start building HE Mesh
+        for(unsigned i=0;i<vIndex.size();i+=3){ //Start iterating over the vIndex
+            //We point to the three triangle verteces
+            v* v1 = &verteces[vIndex[i]-1];
+            v* v2 = &verteces[vIndex[i+1]-1];
+            v* v3 = &verteces[vIndex[i+2]-1];
+            //Now we attach them with edges
+            v1->edge = new e(v1,v2);
+            v1->edge->next = new e(v2,v3);
+            v1->edge->next->next = new e(v3, v1);
+            //Now we attach remaining verteces to their edges (in case is the only face they belong)
+            v2->edge = v1->edge->next;
+            v3->edge = v1->edge->next->next;
+            //Now we attach the face to 1 of the edges
+            faces.push_back(f(v1->edge));
+            cout<<"Contruyó cara"<<endl;
+        }
     }
     void print(){
-        cout<<"vertices"<<endl;
+        /*cout<<"vertices"<<endl;
         for(unsigned i=0;i<verteces.size();++i) verteces[i].print();
         cout<<"caras"<<endl;
-        for(unsigned i=0;i<vIndex.size();i+=3) cout<<vIndex[i]<<" "<<vIndex[i+1]<<" "<<vIndex[i+2]<<endl;
+        for(unsigned i=0;i<vIndex.size();i+=3) cout<<vIndex[i]<<" "<<vIndex[i+1]<<" "<<vIndex[i+2]<<endl;]*/
     }
 };
 
